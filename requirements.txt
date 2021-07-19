@@ -1,0 +1,17 @@
+# FirmwareCheck/generate_report.py: 10
+Jinja2 == 2.11.2
+
+# FirmwareCheck/generate_report.py: 4
+PyYAML == 5.3.1
+
+# FirmwareCheck/generate_report.py: 11
+cve_searchsploit == 1.6
+
+# FirmwareCheck/generate_report.py: 8
+pdfkit == 0.6.1
+
+# FirmwareCheck/CI/firmware_check.py: 3
+pexpect == 4.6.0
+
+# FirmwareCheck/generate_report.py: 9
+requests == 2.22.0

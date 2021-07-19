@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Report</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://pagecdn.io/lib/chart/2.9.3/Chart.min.js" crossorigin="anonymous"></script>
+    <link href="https://pagecdn.io/lib/chart/2.9.3/Chart.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          crossorigin="anonymous">
+</head>
+<style>
+    @media print {
+         body {
+            background-color: white !important;
+         }
+
+         .cve_section {
+            page-break-after: avoid;
+        }
+    }
+
+</style>
+<body>
+<div class="container col-xs-12">
+    <h3>Report</h3>
+    <hr>
+    <div class="col-lg-6">
+        <div class="col-xs-12">
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>System</h4>
+                    </div>
+                    <div class="panel-body">
+                        <p>Linux Kernel Version: {{ kernel }}
+                            {% if kernel_exploits|length > 0 %}
+                            <span class="text-warning">
+                                <i class="fa fa-exclamation-triangle" aria-hidden="true">
+                                </i>Outdated Kernel
+                            </span>
+                            {% endif %}
+                        </p>
+                        <p>Open Ports:
+                            {% for port in open_ports %}
+                            <span class="badge">{{ port }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>System Configuration</h4>
+                    </div>
+                    <div class="panel-body">
+                        {% if mysql_pwless_root_allowed %}
+                            <span class="text-warning"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> MySQL root password not set</span>
+                            <hr>
+                        {% endif %}
+                        {% if root_processes|length > 0 %}
+                        <p class="text-warning">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            Found unusual processes running as root:
+                        </p>
+                        {% for p in root_processes %}<p style="line-height: 0.8"><samp>{{ p }}</samp></p>{% endfor %}
+                        <p><i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i> Create users for these
+                            processes to avoid privilege escalation attacks</p>
+                        <hr>
+                        {% else %}
+                        <p class="text-success"><i class="fa fa-check"></i> No unusual processes running as root</p>
+                        <hr>
+                        {% endif %}
+                        {% if useful_bins|length > 0 %}
+                        <p class="text-warning">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            Found binaries that can be useful for hackers to gain shell access:
+                        </p>
+                        {% for bin in useful_bins %}<p style="line-height: 0.8"><samp>{{ bin }}</samp></p>{% endfor %}
+                        <p><i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i> Consider removing these if they
+                            are not needed</p>
+                        <hr>
+                        {% else %}
+                        <p class="text-success"><i class="fa fa-check"></i>No binaries found that can be useful for
+                            hackers</p>
+                        <hr>
+                        {% endif %}
+                        {% if serial_ports|length > 0 %}
+                        <p class="text-warning">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            Serial ports open:
+                        </p>
+                        {% for p in serial_ports %}<p style="line-height: 0.8"><samp>{{ p }}</samp></p>{% endfor %}
+                        <p><i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i> Consider removing these if they
+                            are not needed</p>
+                        <hr>
+                        {% else %}
+                        <p class="text-success"><i class="fa fa-check"></i>No serial ports found that are open</p>
+                        <hr>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 cve_section">
+        <div class="col-xs-12">
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>CVE Overview</h4>
+                    </div>
+                    <div class="panel-body">
+                        <canvas class="center" id="piechart" width="400" height="300"></canvas>
+                        <script>
+                            const data = {
+                               labels: {{ piechart_labels }},
+                               datasets: [
+                                  {
+                                    label: 'Dataset 1',
+                                    data: {{ piechart_data }},
+                                    backgroundColor: [
+                                      'rgb(55, 55, 55)',
+                                      'rgb(55, 255, 55)',
+                                      'rgb(255, 205, 86)',
+                                      'rgb(255, 30, 36)',
+                                    ],
+                                  }
+                               ]
+                            };
+
+                            const config = {
+                              type: 'pie',
+                              data: data,
+                              options: {
+                                  animation: {
+                                     duration: 0
+                                  },
+                                responsive: false,
+                                plugins: {
+                                  legend: {
+                                    position: 'top',
+                                  },
+                                  title: {
+                                    display: true,
+                                    text: 'Findings'
+                                  }
+                                }
+                              },
+                            };
+
+                            var ctx = document.getElementById('piechart').getContext('2d');
+                            var piechart = new Chart(ctx, config);
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <div class="row cve_section">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Potential Vulnerabilities</h4>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table" id="cves">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Component</th>
+                                <th scope="col">CVE</th>
+                                <th scope="col">Exploit name</th>
+                                <th scope="col">Severity</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for cve in cves %}
+                            <tr>
+                                <th scope="row">{{ loop.index }}</th>
+                                <td>{{ cve.service }} {{ cve.service_version }}</td>
+                                <td><a href="{{ cve.url }}">{{ cve.cve }}</a></td>
+                                <td>{{ cve.name }}</td>
+                                <td>{{ cve.severity }}</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

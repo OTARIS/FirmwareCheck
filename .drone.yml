@@ -1,0 +1,51 @@
+kind: pipeline
+name: default
+type: docker
+steps:
+- name: buildroot_debug
+  image: srath/buildroot:latest
+  commands:
+  - cd /buildroot && make # generate rootfs and kernel image
+  - mv output/images/* /firmware # move into shared volume
+  volumes:
+  - name: artifacts
+    path: /firmware
+  when:
+    branch:
+      include:
+        - master
+- name: firmware_check
+  image: srath/firmware_check:latest
+  commands:
+  - cd /
+  - ./firmware_check.py --ports 21,22,23,80
+  volumes:
+  - name: artifacts
+    path: /firmware
+  - name: download_cache
+    path: /dl
+  when:
+    branch:
+      include:
+       - master
+- name: buildroot_release
+  image: srath/buildroot:latest
+  commands:
+  - sed -i '/BR2_TARGET_GENERIC_GETTY/d' /buildroot/.config # remove debug port
+  - cd /buildroot && make # generate rootfs and kernel image
+  - mv output/images/* /firmware # move into shared volume
+  volumes:
+  - name: artifacts
+    path: /firmware
+  - name: download_cache
+    path: /dl
+  when:
+    branch:
+      include:
+        - master
+
+volumes:
+- name: artifacts
+  temp: {}
+- name: download_cache
+  temp: {}

@@ -1,0 +1,4 @@
+firmware_check.sh
+.idea/*
+venv/*
+firmware/*
